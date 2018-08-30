@@ -1,1 +1,1 @@
-# vscode-cve
+# CVE for NodeJS for VS Code
