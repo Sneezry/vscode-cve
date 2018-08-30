@@ -9,12 +9,14 @@ export class Audit {
           let log = '';
           const audit =
               cp.spawn('node', [npmPath, 'audit'], {cwd: path, shell: true});
+          // console.log(['node', npmPath, 'audit'], path);
 
           audit.stdout.on('data', chunk => {
             log += chunk;
           });
 
           audit.stdout.on('end', () => {
+            // console.log(log);
             const vulnerabilities =
                 log.match(/found (.*?) in \d+ scanned packages/);
             if (!vulnerabilities) {

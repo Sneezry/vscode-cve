@@ -6,7 +6,10 @@ let fixing = false;
 
 async function updateStatusBar(
     statusBar: vscode.StatusBarItem, npmPath: string, rootPath: string) {
+  console.log('Updating CVE status bar...');
+
   const vulnerabilities = await Audit.check(npmPath, rootPath);
+  console.log('Vulnerabilities:', vulnerabilities);
 
   if (!vulnerabilities) {
     statusBar.hide();
@@ -53,7 +56,8 @@ async function updateStatusBar(
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  const npmPath = context.asAbsolutePath('node_modules/.bin/npm');
+  console.log('Activating CVE...');
+  const npmPath = context.asAbsolutePath('node_modules/npm/lib/npm');
   const rootPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
   const statusBar =
       vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
