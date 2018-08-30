@@ -1,6 +1,6 @@
 {
     "name": "cve",
-    "displayName": "cve",
+    "displayName": "CVE for NodeJS",
     "description": "Show security alerts for vulnerable dependencies of Node projects",
     "version": "0.0.1",
     "publisher": "sneezry",
