@@ -3,7 +3,7 @@
     "displayName": "CVE for NodeJS",
     "description": "Show security alerts for vulnerable dependencies of Node projects",
     "icon": "security-camera.png",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "publisher": "sneezry",
     "engines": {
         "vscode": "^1.26.0"
