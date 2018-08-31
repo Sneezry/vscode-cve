@@ -1,5 +1,9 @@
 'use strict';
+import * as vscode from 'vscode';
 import * as cp from 'child_process';
+
+const MAX_FIX_ATTEMPT_COUNT = 5;
+let fixAttemptCount = 0;
 
 export class Audit {
   static async check(npmPath: string, path: string) {
@@ -35,14 +39,103 @@ export class Audit {
         });
   }
 
-  static async fix(npmPath: string, path: string) {
+  static async fix(
+      statusBar: vscode.StatusBarItem, npmPath: string, path: string,
+      force = false) {
     return new Promise(resolve => {
-      const audit =
-          cp.spawn('node', [npmPath, 'audit', 'fix'], {cwd: path, shell: true});
+      let log = '';
+      const args = [npmPath, 'audit', 'fix'];
+      if (force) {
+        args.push('--force');
+      }
+      const audit = cp.spawn('node', args, {cwd: path, shell: true});
 
-      audit.stdout.on('end', () => {
+      audit.stdout.on('data', chunk => {
+        log += chunk;
+      });
+
+      audit.stdout.on('end', async () => {
+        fixAttemptCount++;
+        if (fixAttemptCount >= MAX_FIX_ATTEMPT_COUNT) {
+          fixAttemptCount = 0;
+          await Audit.updateStatusBar(statusBar, npmPath, path);
+          vscode.window.showWarningMessage(
+              'Some vulnerabilities are fixed failed.');
+        } else {
+          if (log.indexOf('breaking changes') === -1) {
+            await Audit.updateStatusBar(statusBar, npmPath, path);
+            vscode.window.showInformationMessage('Fixed all vulnerabilities.');
+          } else if (force === true) {
+            await Audit.fix(statusBar, npmPath, path, true);
+          } else {
+            const choice = await vscode.window.showWarningMessage(
+                'There\'re breaking changes for fix all vulnerabilities. Would you like to install breaking changes?',
+                'Yes', 'No');
+            if (choice === 'Yes') {
+              await Audit.fix(statusBar, npmPath, path, true);
+            } else {
+              await Audit.updateStatusBar(statusBar, npmPath, path);
+              vscode.window.showWarningMessage(
+                  'Some vulnerabilities are not fixed.');
+            }
+          }
+        }
+
         return resolve();
       });
     });
+  }
+
+  static async updateStatusBar(
+      statusBar: vscode.StatusBarItem, npmPath: string, rootPath: string) {
+    console.log('Updating CVE status bar...');
+
+    const vulnerabilities = await Audit.check(npmPath, rootPath);
+    console.log('Vulnerabilities:', vulnerabilities);
+
+    if (!vulnerabilities) {
+      statusBar.hide();
+      return;
+    }
+
+    if (vulnerabilities.high) {
+      statusBar.text = '$(alert) High';
+      statusBar.color = 'red';
+    } else if (vulnerabilities.moderate) {
+      statusBar.text = 'Moderate';
+      statusBar.color = undefined;
+    } else {
+      statusBar.text = 'Low';
+      statusBar.color = undefined;
+    }
+
+    const tooltip = [];
+    if (vulnerabilities.low) {
+      tooltip.push(`${vulnerabilities.low} low`);
+    }
+    if (vulnerabilities.moderate) {
+      tooltip.push(`${vulnerabilities.moderate} moderate`);
+    }
+    if (vulnerabilities.high) {
+      tooltip.push(`${vulnerabilities.high} high`);
+    }
+
+    if (tooltip.length === 1) {
+      statusBar.tooltip = tooltip[0] +
+          (vulnerabilities.low + vulnerabilities.moderate +
+                       vulnerabilities.high >
+                   1 ?
+               ' vulnerabilities' :
+               ' vulnerability');
+    } else if (tooltip.length === 2) {
+      statusBar.tooltip =
+          tooltip[0] + ' and ' + tooltip[1] + ' vulnerabilities';
+    } else {
+      statusBar.tooltip = tooltip[0] + ', ' + tooltip[1] + ' and ' +
+          tooltip[2] + ' vulnerabilities';
+    }
+
+    statusBar.command = 'cve.fix';
+    statusBar.show();
   }
 }
