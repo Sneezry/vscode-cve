@@ -5,6 +5,13 @@
     "icon": "security-camera.png",
     "version": "0.0.3",
     "publisher": "sneezry",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Sneezry/vscode-cve.git"
+      },
+      "bugs": {
+        "url": "https://github.com/Sneezry/vscode-cve/issues"
+      },
     "engines": {
         "vscode": "^1.26.0"
     },
