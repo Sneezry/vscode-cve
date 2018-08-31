@@ -8,7 +8,9 @@ let fixAttemptCount = 0;
 export class Audit {
   static async check(npmPath: string, path: string) {
     return new Promise(
-        (resolve: (value: null|{low: number, moderate: number, high: number}) =>
+        (resolve: (
+             value: null|
+             {low: number, moderate: number, high: number, critical: number}) =>
              void) => {
           let log = '';
           const audit =
@@ -29,11 +31,13 @@ export class Audit {
               const lowMatch = vulnerabilities[1].match(/(\d+) low/);
               const moderateMatch = vulnerabilities[1].match(/(\d+) moderate/);
               const highMatch = vulnerabilities[1].match(/(\d+) high/);
+              const criticalMatch = vulnerabilities[1].match(/(\d+) critical/);
               const low = lowMatch ? Number(lowMatch[1]) : 0;
               const moderate = moderateMatch ? Number(moderateMatch[1]) : 0;
               const high = highMatch ? Number(highMatch[1]) : 0;
+              const critical = criticalMatch ? Number(criticalMatch[1]) : 0;
 
-              return resolve({low, moderate, high});
+              return resolve({low, moderate, high, critical});
             }
           });
         });
@@ -98,7 +102,10 @@ export class Audit {
       return;
     }
 
-    if (vulnerabilities.high) {
+    if (vulnerabilities.critical) {
+      statusBar.text = '$(alert) Critical';
+      statusBar.color = 'darkred';
+    } else if (vulnerabilities.high) {
       statusBar.text = '$(alert) High';
       statusBar.color = 'red';
     } else if (vulnerabilities.moderate) {
@@ -119,6 +126,9 @@ export class Audit {
     if (vulnerabilities.high) {
       tooltip.push(`${vulnerabilities.high} high`);
     }
+    if (vulnerabilities.critical) {
+      tooltip.push(`${vulnerabilities.critical} critical`);
+    }
 
     if (tooltip.length === 1) {
       statusBar.tooltip = tooltip[0] +
@@ -130,9 +140,12 @@ export class Audit {
     } else if (tooltip.length === 2) {
       statusBar.tooltip =
           tooltip[0] + ' and ' + tooltip[1] + ' vulnerabilities';
-    } else {
+    } else if (tooltip.length === 3) {
       statusBar.tooltip = tooltip[0] + ', ' + tooltip[1] + ' and ' +
           tooltip[2] + ' vulnerabilities';
+    } else {
+      statusBar.tooltip = tooltip[0] + ', ' + tooltip[1] + ', ' + tooltip[2] +
+          ' and ' + tooltip[3] + ' vulnerabilities';
     }
 
     statusBar.command = 'cve.fix';
