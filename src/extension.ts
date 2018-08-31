@@ -8,7 +8,11 @@ let fixing = false;
 async function updateStatusBar(
     statusBar: vscode.StatusBarItem, npmPath: string, rootPath: string) {
   const auditResult = await Audit.check(npmPath, rootPath);
-  await UI.updateStatusBar(statusBar, auditResult);
+  if (!auditResult) {
+    statusBar.hide();
+    return;
+  }
+  UI.updateStatusBar(statusBar, auditResult);
 }
 
 export function activate(context: vscode.ExtensionContext) {

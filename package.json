@@ -3,7 +3,7 @@
     "displayName": "CVE for NodeJS",
     "description": "Show security alert for vulnerable dependencies of Node projects",
     "icon": "security-camera.png",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "publisher": "sneezry",
     "repository": {
         "type": "git",

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import {AuditResult} from './interface';
 
 export class UI {
-  static async updateStatusBar(
+  static updateStatusBar(
       statusBar: vscode.StatusBarItem, auditResult: AuditResult) {
     if (auditResult.critical) {
       statusBar.text = '$(alert) Critical';
