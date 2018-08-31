@@ -1,8 +1,15 @@
 'use strict';
 import * as vscode from 'vscode';
 import {Audit} from './audit';
+import {UI} from './ui';
 
 let fixing = false;
+
+async function updateStatusBar(
+    statusBar: vscode.StatusBarItem, npmPath: string, rootPath: string) {
+  const auditResult = await Audit.check(npmPath, rootPath);
+  await UI.updateStatusBar(statusBar, auditResult);
+}
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('Activating CVE...');
@@ -24,14 +31,22 @@ export function activate(context: vscode.ExtensionContext) {
               title: 'Fixing vulnerabilities...',
               cancellable: false
             },
-            () => {
-              return Audit.fix(statusBar, npmPath, rootPath).then(() => {
-                fixing = false;
-              });
+            async () => {
+              const fixResult = await Audit.fix(npmPath, rootPath);
+              await updateStatusBar(statusBar, npmPath, rootPath);
+
+              if (fixResult.code === 0) {
+                vscode.window.showInformationMessage(fixResult.message);
+              } else {
+                vscode.window.showWarningMessage(fixResult.message);
+              }
+
+              fixing = false;
+              return Promise.resolve();
             });
       }));
 
-  Audit.updateStatusBar(statusBar, npmPath, rootPath);
+  updateStatusBar(statusBar, npmPath, rootPath);
 }
 
 export function deactivate() {}
